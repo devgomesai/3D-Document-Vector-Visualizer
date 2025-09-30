@@ -26,28 +26,48 @@ def process_chunks(chunks):
     return tfidf_matrix, vectorizer
 
 def tsne_3d_plotly(matrix, labels, query_point=None):
-    tsne = TSNE(n_components=3, random_state=42, perplexity=5, learning_rate=100)
+    n_samples = matrix.shape[0]
+    if n_samples < 2:
+        st.warning("Not enough data to plot t-SNE. Add more text chunks.")
+        return
+
+    perplexity = min(30, n_samples - 1)
+    tsne = TSNE(n_components=3, random_state=42, perplexity=perplexity, learning_rate=100)
     reduced = tsne.fit_transform(matrix.toarray())
 
     df = pd.DataFrame(reduced, columns=["x", "y", "z"])
     df["label"] = labels
 
-    fig = px.scatter_3d(df, x="x", y="y", z="z",
-                        opacity=0.7, color="label")
+    # Define custom color palette
+    color_map = {
+        "test1.txt [Chunk 1]": "#00FF00",  # bright green
+        "test1.txt [Chunk 2]": "#FFFF00",  # bright yellow
+        "test2.txt [Chunk 1]": "#FF00FF",  # magenta
+        "test2.txt [Chunk 2]": "#00FFFF",  # cyan
+    }
+
+    fig = px.scatter_3d(
+        df, x="x", y="y", z="z",
+        color="label",
+        color_discrete_map=color_map,
+        opacity=0.8,
+        size_max=8
+    )
 
     if query_point is not None:
         fig.add_scatter3d(
             x=[query_point[0]], y=[query_point[1]], z=[query_point[2]],
-            mode="markers+text", marker=dict(size=8, color="red"),
+            mode="markers+text",
+            marker=dict(size=10, color="red", symbol="diamond"),
             name="Query", text=["Query"]
         )
 
-    # ✅ Updated here to fix deprecation warning
-    config = {
-    "displaylogo": False,   # hides Plotly logo
-    "responsive": True      # makes chart stretch responsively
-    }
+    fig.update_traces(marker=dict(line=dict(width=1, color='black')))  # outline
+
+    config = {"displaylogo": False, "responsive": True}
     st.plotly_chart(fig, config=config, use_container_width=True)
+
+
 
 def find_similar_chunks(query, vectorizer, tfidf_matrix, chunks, chunk_names):
     query_vec = vectorizer.transform([query])
