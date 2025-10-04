@@ -1,4 +1,5 @@
 ## Doc-Vector
+![IMAGE](./image.png)
 
 A simple document chunking and visualization tool. Upload `.txt` files, explore TF‑IDF vectors in an interactive 3D t‑SNE plot, and query for the most similar chunks. Includes a tiny CLI demo for vector-based matching.
 
